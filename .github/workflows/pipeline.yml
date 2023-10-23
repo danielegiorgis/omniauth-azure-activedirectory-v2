@@ -1,0 +1,43 @@
+name: Default weLaika Rails pipeline
+on: [pull_request]
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  reviewdog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/check_linters
+      - uses: ./.github/actions/build
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
+      - name: Run rubocop
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./bin/rubocop --fail-level E | reviewdog -f=rubocop -reporter=github-pr-review
+        if: ${{ env.rubocop_present == 'true' }}
+
+      - name: Run brakeman
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./bin/brakeman --quiet --format tabs | reviewdog -f=brakeman -reporter=github-pr-review
+      - name: Run stylelint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn stylelint app/assets/stylesheets | reviewdog -reporter=github-pr-review -f=stylelint
+      - name: Run slim-lint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./bin/slim-lint app/views/ | reviewdog -reporter=github-pr-review -f=slim-lint
+      - name: Run brakeman
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./bin/brakeman -z --skip-files vendor/bundle --except EOLRuby | reviewdog -reporter=github-pr-review -f=brakeman
+      - name: Run fasterer
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec fasterer | reviewdog -reporter=github-pr-review -f=fasterer

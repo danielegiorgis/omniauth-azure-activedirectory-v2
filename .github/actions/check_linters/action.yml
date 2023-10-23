@@ -1,0 +1,17 @@
+name: Check linters
+description: Check linters
+
+runs:
+  using: "composite"
+
+steps:
+  - name: Check RuboCop presence
+    id: rubocop-check
+    run: |
+      if [ -e bin/rubocop ]; then
+        echo "::set-output name=rubocop_present::true"
+      else
+        echo "::set-output name=rubocop_present::false"
+      fi
+  - name: Output variable on Github Env
+    run: echo "rubocop_present=${{ steps.rubocop-check.outputs.rubocop_present }}" >> $GITHUB_ENV
