@@ -1,0 +1,47 @@
+name: Check linters
+description: Check linters
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check nmp or yarn modules presence
+      id: js-modules-check
+      run: |
+        if [ -e package.json ]; then
+          echo "js_modules_present=true" >> $GITHUB_OUTPUT
+        else
+          echo "js_modules_present=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Output variable on Github Env
+      run: echo "js_modules_present=${{ steps.node-check.outputs.js_modules_present }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Check Node presence
+      id: node-check
+      run: |
+        if [ -e .nvmrc ]; then
+          echo "node_present=true" >> $GITHUB_OUTPUT
+        else
+          echo "node_present=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Output variable on Github Env
+      run: echo "node_present=${{ steps.node-check.outputs.node_present }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Check RuboCop presence
+      id: rubocop-check
+      run: |
+        if [ -e bin/rubocop ]; then
+          echo "rubocop_present=true" >> $GITHUB_OUTPUT
+        else
+          echo "rubocop_present=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Output variable on Github Env
+      run: echo "rubocop_present=${{ steps.rubocop-check.outputs.rubocop_present }}" >> $GITHUB_ENV
+      shell: bash
